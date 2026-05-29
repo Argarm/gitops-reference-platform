@@ -1,0 +1,69 @@
+---
+# App-of-apps root.
+#
+# This file declares the two environment "parent" Applications. Each parent
+# points at a Kustomize overlay, which renders that environment's namespaces and
+# the child workload Applications (podinfo, httpbin, guestbook). Those children
+# in turn render their third-party Helm charts. The resulting hierarchy is:
+#
+#   root-app.yaml
+#     ├── platform-dev   -> kustomize/overlays/dev   -> {podinfo,httpbin,guestbook}-dev
+#     └── platform-prod  -> kustomize/overlays/prod   -> {podinfo,httpbin,guestbook}-prod
+#
+# Bootstrap with:
+#   kubectl apply -f argocd/root-app.yaml
+#
+# The environment parents track the `main` branch; the workloads they generate
+# pin exact chart versions. This keeps platform wiring fast-moving while the
+# deployed software stays explicitly pinned.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: platform-dev
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+  labels:
+    app.kubernetes.io/part-of: gitops-reference-platform
+    app.kubernetes.io/environment: dev
+spec:
+  project: platform
+  source:
+    repoURL: https://github.com/Argarm/gitops-reference-platform.git
+    path: kustomize/overlays/dev
+    targetRevision: main
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: argocd
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: platform-prod
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+  labels:
+    app.kubernetes.io/part-of: gitops-reference-platform
+    app.kubernetes.io/environment: prod
+spec:
+  project: platform
+  source:
+    repoURL: https://github.com/Argarm/gitops-reference-platform.git
+    path: kustomize/overlays/prod
+    targetRevision: main
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: argocd
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

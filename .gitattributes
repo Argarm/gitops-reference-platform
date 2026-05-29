@@ -1,0 +1,7 @@
+# Normalize line endings. Shell scripts and YAML MUST be LF so they run
+# correctly on the Linux CI runner regardless of the authoring OS.
+* text=auto eol=lf
+*.sh text eol=lf
+*.yaml text eol=lf
+*.yml text eol=lf
+*.md text eol=lf

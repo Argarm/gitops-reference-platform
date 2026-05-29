@@ -1,0 +1,39 @@
+# --- Kubernetes / cluster credentials (NEVER commit) ---
+kubeconfig
+*.kubeconfig
+.kube/
+*.kubeconfig.yaml
+
+# --- Secrets & credentials ---
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+*.crt
+*.p12
+*.pfx
+secrets.yaml
+secrets.*.yaml
+*-secret.yaml
+*-secrets.yaml
+sealed-secret*.yaml.dec
+
+# --- ArgoCD / Helm local state ---
+.argocd-*
+charts/
+*.tgz
+Chart.lock
+
+# --- Tooling / local binaries ---
+bin/
+tools/
+*.exe
+
+# --- OS / editor noise ---
+.DS_Store
+Thumbs.db
+*.swp
+*~
+.idea/
+.vscode/

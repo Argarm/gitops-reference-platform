@@ -1,0 +1,44 @@
+---
+# guestbook — the canonical ArgoCD example app, packaged as the upstream
+# `helm-guestbook` chart and consumed directly from its Git repository.
+#
+# This demonstrates a third-party Helm chart sourced from a Git path (rather
+# than a chart registry). The revision is pinned to an immutable commit SHA for
+# reproducibility — the upstream repo's only tags are stale (2018) per-app tags.
+#
+# NOTE: helm-guestbook is a minimal chart (Deployment + Service only, no
+# ingress template). It is differentiated across environments via replicaCount
+# and resources; ingress-host differentiation is demonstrated on podinfo/httpbin.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: guestbook
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: platform
+  source:
+    repoURL: https://github.com/argoproj/argocd-example-apps.git
+    path: helm-guestbook
+    targetRevision: 8088f4c0d970abb09e250248cc97e35623447cb5
+    helm:
+      releaseName: guestbook
+      valuesObject:
+        replicaCount: 1
+        resources:
+          requests:
+            cpu: 25m
+            memory: 32Mi
+          limits:
+            cpu: 100m
+            memory: 64Mi
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: guestbook
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

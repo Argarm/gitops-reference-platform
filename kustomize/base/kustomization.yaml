@@ -1,0 +1,19 @@
+---
+# Environment-agnostic platform base.
+#
+# Holds the platform namespaces and the base ArgoCD Application definitions.
+# Overlays (kustomize/overlays/{dev,prod}) reference this base and patch it for
+# each environment. This base is NOT deployed directly.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - namespaces.yaml
+  - apps
+
+# Applied to every resource but NOT to selectors (Applications/Namespaces have
+# none, and we never want kustomize rewriting workload selectors).
+labels:
+  - pairs:
+      app.kubernetes.io/part-of: gitops-reference-platform
+    includeSelectors: false

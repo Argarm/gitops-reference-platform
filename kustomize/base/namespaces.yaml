@@ -1,0 +1,20 @@
+---
+# Platform-owned namespaces, one per example workload.
+#
+# These base names are environment-agnostic. The dev/prod overlays append a
+# `-dev` / `-prod` suffix (via `nameSuffix`) so each environment gets its own
+# isolated namespaces (e.g. `podinfo-dev`, `podinfo-prod`).
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: podinfo
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: httpbin
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: guestbook

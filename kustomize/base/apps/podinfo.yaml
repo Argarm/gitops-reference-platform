@@ -1,0 +1,48 @@
+---
+# podinfo — a small, well-maintained microservice used as a GitOps demo.
+#
+# Third-party Helm chart pulled directly from its OCI registry. Kustomize does
+# NOT inflate this chart; ArgoCD renders it at sync time from the source.helm
+# block below. The values here are conservative baseline defaults — the dev and
+# prod overlays patch replicaCount, resources and the ingress host per env.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: podinfo
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: platform
+  source:
+    repoURL: ghcr.io/stefanprodan/charts
+    chart: podinfo
+    targetRevision: 6.12.0
+    helm:
+      releaseName: podinfo
+      valuesObject:
+        replicaCount: 1
+        resources:
+          requests:
+            cpu: 25m
+            memory: 32Mi
+          limits:
+            cpu: 100m
+            memory: 64Mi
+        ingress:
+          enabled: true
+          className: nginx
+          hosts:
+            - host: podinfo.example.com
+              paths:
+                - path: /
+                  pathType: ImplementationSpecific
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: podinfo
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

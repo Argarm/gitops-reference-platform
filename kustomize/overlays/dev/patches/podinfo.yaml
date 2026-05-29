@@ -1,0 +1,29 @@
+---
+# dev: single replica, small limits, dev ingress host.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: podinfo
+  namespace: argocd
+spec:
+  destination:
+    namespace: podinfo-dev
+  source:
+    helm:
+      valuesObject:
+        replicaCount: 1
+        resources:
+          requests:
+            cpu: 25m
+            memory: 32Mi
+          limits:
+            cpu: 100m
+            memory: 64Mi
+        ingress:
+          enabled: true
+          className: nginx
+          hosts:
+            - host: podinfo.dev.example.com
+              paths:
+                - path: /
+                  pathType: ImplementationSpecific

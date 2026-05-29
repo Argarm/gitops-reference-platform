@@ -1,0 +1,21 @@
+---
+# dev: single replica, small limits (helm-guestbook has no ingress template).
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: guestbook
+  namespace: argocd
+spec:
+  destination:
+    namespace: guestbook-dev
+  source:
+    helm:
+      valuesObject:
+        replicaCount: 1
+        resources:
+          requests:
+            cpu: 25m
+            memory: 32Mi
+          limits:
+            cpu: 100m
+            memory: 64Mi

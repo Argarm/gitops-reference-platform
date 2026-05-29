@@ -1,0 +1,48 @@
+---
+# Production overlay.
+#
+# References the platform base and patches each ArgoCD Application for the prod
+# environment: higher replica counts, larger resource limits and the canonical
+# `*.example.com` ingress hosts.
+#
+# Naming mirrors the dev overlay: `nameSuffix` gives Applications a `-prod`
+# suffix; namespaces are renamed explicitly via JSON6902 patches (kustomize does
+# not suffix Namespace names).
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - ../../base
+
+nameSuffix: -prod
+
+labels:
+  - pairs:
+      app.kubernetes.io/environment: prod
+    includeSelectors: false
+
+patches:
+  - path: patches/podinfo.yaml
+  - path: patches/httpbin.yaml
+  - path: patches/guestbook.yaml
+  - target:
+      kind: Namespace
+      name: podinfo
+    patch: |-
+      - op: replace
+        path: /metadata/name
+        value: podinfo-prod
+  - target:
+      kind: Namespace
+      name: httpbin
+    patch: |-
+      - op: replace
+        path: /metadata/name
+        value: httpbin-prod
+  - target:
+      kind: Namespace
+      name: guestbook
+    patch: |-
+      - op: replace
+        path: /metadata/name
+        value: guestbook-prod

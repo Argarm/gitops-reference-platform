@@ -1,0 +1,25 @@
+---
+# yamllint configuration for the whole repository.
+extends: default
+
+rules:
+  # Long lines are unavoidable (image digests, install-manifest URLs). Keep them
+  # visible as warnings but do not fail the build on length alone.
+  line-length:
+    max: 160
+    level: warning
+  # Every document must start with `---` for unambiguous multi-doc parsing.
+  document-start:
+    present: true
+  indentation:
+    spaces: 2
+    indent-sequences: true
+  # Allow the common `on:` key in GitHub workflows without truthy complaints.
+  truthy:
+    check-keys: false
+  comments:
+    min-spaces-from-content: 1
+
+ignore: |
+  /tools/
+  /bin/

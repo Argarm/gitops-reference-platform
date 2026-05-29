@@ -1,0 +1,34 @@
+---
+# kind cluster definition used both for local development and in CI.
+#
+# A single control-plane node is enough for validating GitOps manifests and
+# running ArgoCD. The node image is pinned by digest (see kind v0.31.0 release
+# notes) so the cluster is byte-for-byte reproducible across machines and CI.
+#
+# Usage:
+#   kind create cluster --name gitops-ref --config bootstrap/kind-config.yaml
+#
+# NOTE: CI does NOT create this cluster — it validates and dry-runs manifests
+# only. This file exists for local end-to-end experimentation and as the
+# documented, reproducible cluster shape.
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+name: gitops-ref
+nodes:
+  - role: control-plane
+    image: kindest/node:v1.35.0@sha256:452d707d4862f52530247495d180205e029056831160e22870e37e3f6c1ac31f
+    # Label the node so an ingress controller (e.g. ingress-nginx) schedules here.
+    kubeadmConfigPatches:
+      - |
+        kind: InitConfiguration
+        nodeRegistration:
+          kubeletExtraArgs:
+            node-labels: "ingress-ready=true"
+    # Expose HTTP/HTTPS from the host so ingress is reachable at localhost.
+    extraPortMappings:
+      - containerPort: 80
+        hostPort: 80
+        protocol: TCP
+      - containerPort: 443
+        hostPort: 443
+        protocol: TCP

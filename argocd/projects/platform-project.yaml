@@ -1,0 +1,74 @@
+---
+# Platform AppProject.
+#
+# An ArgoCD AppProject is the primary multi-tenancy / RBAC boundary. This one
+# scopes the platform tightly:
+#   * sourceRepos  — only the Git repo and chart registries this platform uses.
+#   * destinations — only the in-cluster API server and the namespaces this
+#                    platform owns (per-app, per-environment) plus `argocd`
+#                    itself so the app-of-apps can manage child Applications.
+#   * resource whitelists — cluster-scoped access limited to Namespaces; all
+#                    other resources must be namespaced.
+#   * roles        — a read-only role and a deploy role, illustrating how teams
+#                    are granted least-privilege access scoped to this project.
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: platform
+  namespace: argocd
+  # Keep the project from being pruned if it is ever managed by ArgoCD itself.
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+  labels:
+    app.kubernetes.io/part-of: gitops-reference-platform
+spec:
+  description: Platform-owned workloads and their environments (dev / prod).
+
+  # Where manifests/charts may come from. Anything else is rejected.
+  sourceRepos:
+    - https://github.com/Argarm/gitops-reference-platform.git
+    - https://github.com/argoproj/argocd-example-apps.git
+    - https://matheusfm.dev/charts
+    - ghcr.io/stefanprodan/charts*
+
+  # Where applications may be deployed. Restricted to this cluster and the
+  # namespaces this platform owns.
+  destinations:
+    - server: https://kubernetes.default.svc
+      namespace: argocd
+    - server: https://kubernetes.default.svc
+      namespace: podinfo-*
+    - server: https://kubernetes.default.svc
+      namespace: httpbin-*
+    - server: https://kubernetes.default.svc
+      namespace: guestbook-*
+
+  # Cluster-scoped resources are limited to Namespaces (the workloads create
+  # their own namespace via the CreateNamespace sync option).
+  clusterResourceWhitelist:
+    - group: ""
+      kind: Namespace
+    - group: argoproj.io
+      kind: AppProject
+
+  # Namespaced resources allowed within the project's destinations.
+  namespaceResourceWhitelist:
+    - group: "*"
+      kind: "*"
+
+  # Least-privilege RBAC roles scoped to this project.
+  roles:
+    - name: read-only
+      description: Read-only access to platform applications.
+      policies:
+        - p, proj:platform:read-only, applications, get, platform/*, allow
+      groups:
+        - platform-viewers
+    - name: deployer
+      description: Sync and manage platform applications.
+      policies:
+        - p, proj:platform:deployer, applications, get, platform/*, allow
+        - p, proj:platform:deployer, applications, sync, platform/*, allow
+        - p, proj:platform:deployer, applications, action/*, platform/*, allow
+      groups:
+        - platform-deployers

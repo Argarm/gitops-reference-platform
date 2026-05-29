@@ -1,0 +1,48 @@
+---
+# httpbin — a simple HTTP request/response service (go-httpbin), handy for
+# testing ingress, routing and probes.
+#
+# Third-party Helm chart from the matheusfm Helm repository, referenced directly
+# from source.helm (NOT inflated by Kustomize). Baseline values below; the
+# dev/prod overlays patch replicaCount, resources and the ingress host.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: httpbin
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: platform
+  source:
+    repoURL: https://matheusfm.dev/charts
+    chart: httpbin
+    targetRevision: 0.1.1
+    helm:
+      releaseName: httpbin
+      valuesObject:
+        replicaCount: 1
+        resources:
+          requests:
+            cpu: 25m
+            memory: 32Mi
+          limits:
+            cpu: 100m
+            memory: 64Mi
+        ingress:
+          enabled: true
+          className: nginx
+          hosts:
+            - host: httpbin.example.com
+              paths:
+                - path: /
+                  pathType: ImplementationSpecific
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: httpbin
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

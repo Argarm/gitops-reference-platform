@@ -1,0 +1,45 @@
+---
+# CI runs the full test pyramid on every pull request and on every push to
+# main. The jobs are chained unit -> integration -> e2e via `needs:`, so a fast
+# static failure stops the run before the slower layers spend any time. No
+# cluster or cloud is provisioned — every layer is offline and deterministic
+# (see tests/README.md).
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  unit:
+    name: Layer 1 — unit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup-tools
+      - name: Run unit tests
+        run: bash tests/unit/run.sh
+
+  integration:
+    name: Layer 2 — integration
+    needs: unit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup-tools
+      - name: Run integration tests
+        run: bash tests/integration/run.sh
+
+  e2e:
+    name: Layer 3 — e2e
+    needs: integration
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup-tools
+      - name: Run e2e tests
+        run: bash tests/e2e/run.sh

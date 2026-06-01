@@ -1,5 +1,8 @@
 # gitops-reference-platform
 
+[![CI](https://github.com/Argarm/gitops-reference-platform/actions/workflows/ci.yml/badge.svg)](https://github.com/Argarm/gitops-reference-platform/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
+
 A reference GitOps platform built around ArgoCD's **app-of-apps** pattern, with two
 environments (`dev` / `prod`), reproducible locally on [kind](https://kind.sigs.k8s.io/)
 for CI and documented for production on AKS.

@@ -1,0 +1,72 @@
+---
+# Installs the pinned GitOps toolchain used by every test layer.
+#
+# Versions are pinned in ONE place here so the whole pyramid (unit /
+# integration / e2e) runs against an identical, reproducible toolchain. Bump a
+# version here and every job picks it up.
+name: Setup GitOps tools
+description: Install pinned kustomize, kubeconform, argocd, yq and yamllint.
+
+inputs:
+  kustomize-version:
+    description: kustomize release (without the leading v)
+    default: "5.7.1"
+  kubeconform-version:
+    description: kubeconform release (without the leading v)
+    default: "0.6.7"
+  argocd-version:
+    description: argocd CLI release (without the leading v)
+    default: "3.4.3"
+  yq-version:
+    description: yq release (without the leading v)
+    default: "4.53.2"
+  yamllint-version:
+    description: yamllint release
+    default: "1.35.1"
+
+runs:
+  using: composite
+  steps:
+    - name: Install kustomize, kubeconform, argocd and yq
+      shell: bash
+      env:
+        KUSTOMIZE_VERSION: ${{ inputs.kustomize-version }}
+        KUBECONFORM_VERSION: ${{ inputs.kubeconform-version }}
+        ARGOCD_VERSION: ${{ inputs.argocd-version }}
+        YQ_VERSION: ${{ inputs.yq-version }}
+      run: |
+        set -euo pipefail
+        tmp="$(mktemp -d)"
+        cd "$tmp"
+
+        curl -fsSL -o kustomize.tar.gz \
+          "https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize%2Fv${KUSTOMIZE_VERSION}/kustomize_v${KUSTOMIZE_VERSION}_linux_amd64.tar.gz"
+        tar -xzf kustomize.tar.gz kustomize
+        sudo install -m 0755 kustomize /usr/local/bin/kustomize
+
+        curl -fsSL -o kubeconform.tar.gz \
+          "https://github.com/yannh/kubeconform/releases/download/v${KUBECONFORM_VERSION}/kubeconform-linux-amd64.tar.gz"
+        tar -xzf kubeconform.tar.gz kubeconform
+        sudo install -m 0755 kubeconform /usr/local/bin/kubeconform
+
+        curl -fsSL -o argocd \
+          "https://github.com/argoproj/argo-cd/releases/download/v${ARGOCD_VERSION}/argocd-linux-amd64"
+        sudo install -m 0755 argocd /usr/local/bin/argocd
+
+        curl -fsSL -o yq \
+          "https://github.com/mikefarah/yq/releases/download/v${YQ_VERSION}/yq_linux_amd64"
+        sudo install -m 0755 yq /usr/local/bin/yq
+
+        kustomize version
+        kubeconform -v
+        argocd version --client
+        yq --version
+
+    - name: Set up Python (for yamllint)
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.12"
+
+    - name: Install yamllint
+      shell: bash
+      run: pip install --no-input "yamllint==${{ inputs.yamllint-version }}"
